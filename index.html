@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tanda Quiniela — Copa Mundial FIFA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #00A86B; --green-dark: #007a4d; --gold: #F5C518; --red: #E63946;
+    --bg: #0a0f0d; --surface: #111a15; --surface2: #1a2a1f; --surface3: #223328;
+    --border: rgba(0,168,107,0.2); --border-bright: rgba(0,168,107,0.5);
+    --text: #f0f4f2; --text-muted: #8a9e91; --text-dim: #4a5e52;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,168,107,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,168,107,0.04) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  body::after { content:''; position:fixed; top:-200px; right:-200px; width:600px; height:600px; background:radial-gradient(circle,rgba(0,168,107,0.08) 0%,transparent 70%); pointer-events:none; z-index:0; }
+  .app { position:relative; z-index:1; }
+  .header { padding:32px 24px 24px; text-align:center; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(0,168,107,0.06) 0%,transparent 100%); }
+  .header-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(245,197,24,0.12); border:1px solid rgba(245,197,24,0.3); border-radius:100px; padding:6px 16px; font-size:11px; font-weight:500; letter-spacing:0.08em; color:var(--gold); text-transform:uppercase; margin-bottom:16px; }
+  .header-badge::before { content:'⚽'; font-size:13px; }
+  h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(52px,12vw,96px); letter-spacing:0.02em; line-height:0.9; background:linear-gradient(135deg,#fff 0%,var(--green) 60%,var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .header-sub { font-size:13px; color:var(--text-muted); margin-top:10px; letter-spacing:0.04em; }
+  .sync-bar { display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 16px; font-size:11px; color:var(--text-muted); border-bottom:1px solid var(--border); background:rgba(0,168,107,0.03); }
+  .sync-dot { width:6px; height:6px; border-radius:50%; background:var(--text-dim); transition:background 0.3s; }
+  .sync-dot.live { background:var(--green); animation:pulse 2s infinite; }
+  .sync-dot.saving { background:var(--gold); }
+  .sync-dot.error { background:var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .tabs { display:flex; gap:4px; padding:16px 20px; border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { flex-shrink:0; padding:8px 20px; border-radius:100px; border:1px solid transparent; background:transparent; color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+  .tab:hover { color:var(--text); border-color:var(--border); }
+  .tab.active { background:var(--green); color:#fff; border-color:var(--green); }
+  .main { padding:0 20px 40px; max-width:780px; margin:0 auto; }
+  .view { display:none; padding-top:28px; }
+  .view.active { display:block; }
+  .section-label { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; font-weight:500; }
+  .info-note { font-size:12px; color:var(--text-muted); font-style:italic; margin-bottom:16px; }
+  .name-input-wrap { margin-bottom:32px; }
+  .name-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; font-family:'DM Sans',sans-serif; font-size:16px; color:var(--text); outline:none; transition:border-color 0.2s; }
+  .name-input::placeholder { color:var(--text-dim); }
+  .name-input:focus { border-color:var(--green); }
+  .picks-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+  @media(max-width:520px){.picks-grid{grid-template-columns:1fr;}}
+  .pick-slot { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; transition:border-color 0.2s; }
+  .pick-rank { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .rank-champion .pick-rank { color:var(--gold); }
+  .rank-runner .pick-rank { color:#c0c0c0; }
+  .rank-third .pick-rank { color:#cd7f32; }
+  .pick-selected { display:flex; align-items:center; gap:10px; min-height:40px; }
+  .team-flag { font-size:28px; line-height:1; flex-shrink:0; }
+  .team-name { font-size:15px; font-weight:500; }
+  .pick-placeholder { font-size:13px; color:var(--text-dim); font-style:italic; }
+  .pick-btn { width:100%; margin-top:10px; background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius-sm); padding:8px; color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:12px; cursor:pointer; transition:all 0.2s; }
+  .pick-btn:hover { background:var(--surface3); color:var(--text); border-color:var(--border-bright); }
+  .pick-btn.has-pick { border-style:solid; color:var(--green); border-color:rgba(0,168,107,0.3); }
+  .clear-btn { background:none; border:none; font-size:11px; color:var(--text-dim); cursor:pointer; padding:2px 0 0; font-family:'DM Sans',sans-serif; transition:color 0.15s; display:block; margin-top:4px; }
+  .clear-btn:hover { color:var(--red); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:32px; }
+  .tb-row { display:flex; align-items:center; gap:12px; margin-top:16px; justify-content:center; }
+  .tb-team { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .tb-flag { font-size:36px; line-height:1; }
+  .tb-name { font-size:11px; color:var(--text-muted); text-align:center; }
+  .tb-vs { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--text-dim); }
+  .tb-score { width:52px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 6px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--text); outline:none; transition:border-color 0.2s; -moz-appearance:textfield; }
+  .tb-score::-webkit-inner-spin-button { -webkit-appearance:none; }
+  .tb-score:focus { border-color:var(--green); }
+  .scorer-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 16px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--text); outline:none; transition:border-color 0.2s; margin-top:14px; }
+  .scorer-input::placeholder { color:var(--text-dim); }
+  .scorer-input:focus { border-color:var(--green); }
+  .submit-btn { width:100%; background:var(--green); border:none; border-radius:var(--radius); padding:16px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.06em; color:#fff; cursor:pointer; transition:all 0.2s; }
+  .submit-btn:hover { background:var(--green-dark); transform:translateY(-1px); }
+  .submit-btn:active { transform:translateY(0); }
+  .submit-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal { background:var(--surface); border:1px solid var(--border-bright); border-bottom:none; border-radius:20px 20px 0 0; width:100%; max-width:780px; max-height:85vh; display:flex; flex-direction:column; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .modal-header { padding:20px 20px 0; flex-shrink:0; }
+  .modal-handle { width:36px; height:4px; background:var(--border-bright); border-radius:100px; margin:0 auto 16px; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--text); margin-bottom:12px; }
+  .modal-search { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); outline:none; margin-bottom:12px; transition:border-color 0.2s; }
+  .modal-search::placeholder { color:var(--text-dim); }
+  .modal-search:focus { border-color:var(--green); }
+  .modal-body { overflow-y:auto; padding:0 12px 24px; flex:1; }
+  .conf-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); padding:8px 8px 4px; font-weight:500; }
+  .teams-list { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .team-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; background:transparent; border:1px solid transparent; border-radius:var(--radius-sm); cursor:pointer; text-align:left; color:var(--text); font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .team-btn:hover { background:var(--surface2); border-color:var(--border); }
+  .team-btn.selected { background:rgba(0,168,107,0.12); border-color:rgba(0,168,107,0.4); }
+  .team-btn.dimmed { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+  .team-btn-flag { font-size:24px; flex-shrink:0; }
+  .team-btn-name { font-size:13px; }
+  .points-key { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:28px; }
+  .points-key-title { font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:12px; font-weight:500; }
+  .points-rows { display:flex; gap:8px; flex-wrap:wrap; }
+  .points-row { display:flex; align-items:center; gap:8px; background:var(--surface2); border-radius:6px; padding:6px 12px; font-size:12px; }
+  .pts-val { font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--green); }
+  .pts-label { color:var(--text-muted); }
+  .lb-empty { text-align:center; padding:60px 20px; color:var(--text-muted); }
+  .lb-empty .big-icon { font-size:48px; margin-bottom:12px; }
+  .entry-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:10px; transition:border-color 0.2s; animation:fadeUp 0.3s ease both; }
+  .entry-card:hover { border-color:var(--border-bright); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+  .entry-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .entry-rank-name { display:flex; align-items:center; gap:10px; }
+  .entry-pos { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--text-muted); width:28px; text-align:center; }
+  .entry-pos.p1{color:var(--gold);} .entry-pos.p2{color:#c0c0c0;} .entry-pos.p3{color:#cd7f32;}
+  .entry-name { font-size:16px; font-weight:500; }
+  .entry-date { font-size:11px; color:var(--text-dim); }
+  .entry-points { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--green); }
+  .entry-pts-label { font-size:10px; color:var(--text-muted); text-align:right; letter-spacing:0.06em; }
+  .entry-picks { display:flex; gap:6px; flex-wrap:wrap; }
+  .entry-pick { display:flex; align-items:center; gap:5px; background:var(--surface2); border-radius:6px; padding:5px 9px; font-size:12px; }
+  .entry-pick-flag { font-size:14px; }
+  .entry-pick-name { color:var(--text-muted); }
+  .entry-extras { display:flex; gap:16px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); flex-wrap:wrap; }
+  .extra-item { display:flex; align-items:center; gap:5px; }
+  .extra-label { color:var(--text-dim); }
+  .loading-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px; color:var(--text-muted); }
+  .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--green); color:#fff; padding:12px 24px; border-radius:100px; font-size:14px; font-weight:500; z-index:200; white-space:nowrap; transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-badge">Copa Mundial FIFA 2026 · EE.UU. · Canadá · México</div>
+    <h1>Tanda Quiniela</h1>
+    <div class="header-sub">Elige tus semifinalistas · Marca el marcador final · Nombra al goleador</div>
+  </div>
+  <div class="sync-bar">
+    <span class="sync-dot" id="syncDot"></span>
+    <span id="syncLabel">Conectando…</span>
+    <span id="syncCount" style="color:var(--text-dim);margin-left:4px;"></span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('entry',this)">Mis Picks</button>
+    <button class="tab" onclick="switchTab('board',this)">Tabla de Posiciones</button>
+  </div>
+  <div class="main">
+    <div class="view active" id="view-entry">
+      <div class="name-input-wrap">
+        <div class="section-label">Tu nombre</div>
+        <input class="name-input" id="playerName" type="text" placeholder="Escribe tu nombre…" maxlength="30">
+      </div>
+      <div class="section-label">Semifinalistas y posiciones finales</div>
+      <p class="info-note">Campeón = 4 pts · Subcampeón = 3 pts · 3er lugar = 2 pts · 4o lugar = 1 pt · Equipo correcto, posición incorrecta = 0.5 pts</p>
+      <div class="picks-grid">
+        <div class="pick-slot rank-champion" id="slot-0">
+          <div class="pick-rank"><span>🥇</span> Campeón</div>
+          <div class="pick-selected" id="pick-display-0"><span class="pick-placeholder">Elige un equipo</span></div>
+          <button class="pick-btn" id="pick-btn-0" onclick="openModal(0)">Elegir equipo</button>
+        </div>
+        <div class="pick-slot rank-runner" id="slot-1">
+          <div class="pick-rank"><span>🥈</span> Subcampeón</div>
+          <div class="pick-selected" id="pick-display-1"><span class="pick-placeholder">Elige un equipo</span></div>
+          <button class="pick-btn" id="pick-btn-1" onclick="openModal(1)">Elegir equipo</button>
+        </div>
+        <div class="pick-slot rank-third" id="slot-2">
+          <div class="pick-rank"><span>🥉</span> Tercer lugar</div>
+          <div class="pick-selected" id="pick-display-2"><span class="pick-placeholder">Elige un equipo</span></div>
+          <button class="pick-btn" id="pick-btn-2" onclick="openModal(2)">Elegir equipo</button>
+        </div>
+        <div class="pick-slot" id="slot-3">
+          <div class="pick-rank"><span>4️⃣</span> Cuarto lugar</div>
+          <div class="pick-selected" id="pick-display-3"><span class="pick-placeholder">Elige un equipo</span></div>
+          <button class="pick-btn" id="pick-btn-3" onclick="openModal(3)">Elegir equipo</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">🎯 Desempate — Marcador de la final</div>
+        <p class="info-note" style="margin-bottom:0">El marcador exacto desempata. Solo se usa si hay empate en puntos.</p>
+        <div class="tb-row">
+          <div class="tb-team" id="tb-team0"><span class="tb-flag">🏆</span><span class="tb-name">Campeón</span></div>
+          <input class="tb-score" id="tb-score0" type="number" min="0" max="20" placeholder="0">
+          <span class="tb-vs">:</span>
+          <input class="tb-score" id="tb-score1" type="number" min="0" max="20" placeholder="0">
+          <div class="tb-team" id="tb-team1"><span class="tb-flag">🏅</span><span class="tb-name">Subcampeón</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">⚡ Goleador del torneo</div>
+        <p class="info-note" style="margin-bottom:0">¿Quién crees que anotará más goles en el torneo?</p>
+        <input class="scorer-input" id="topScorer" type="text" placeholder="ej. Erling Haaland, Vinicius Jr…" maxlength="50">
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitEntry()">Enviar mis picks →</button>
+    </div>
+    <div class="view" id="view-board">
+      <div class="points-key">
+        <div class="points-key-title">Sistema de puntuación</div>
+        <div class="points-rows">
+          <div class="points-row"><span class="pts-val">4</span><span class="pts-label">Campeón (exacto)</span></div>
+          <div class="points-row"><span class="pts-val">3</span><span class="pts-label">Subcampeón (exacto)</span></div>
+          <div class="points-row"><span class="pts-val">2</span><span class="pts-label">Tercer lugar (exacto)</span></div>
+          <div class="points-row"><span class="pts-val">1</span><span class="pts-label">Cuarto lugar (exacto)</span></div>
+          <div class="points-row"><span class="pts-val">0.5</span><span class="pts-label">Equipo correcto, posición incorrecta</span></div>
+          <div class="points-row"><span class="pts-val">TB</span><span class="pts-label">Marcador exacto de la final</span></div>
+        </div>
+      </div>
+      <div id="leaderboard-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modalTitle">Selecciona un equipo</div>
+      <input class="modal-search" id="modalSearch" placeholder="Buscar equipos…" oninput="filterTeams()">
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const JSONBIN_ID = "6a19ba1121f9ee59d29a7e2c";
+const JSONBIN_KEY = "$2a$10$eXTExpImk.qw6cAZCpD2Z.Z2btN5wpwnWezKdFzt/tFJiYfEKv8O.";
+const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+const HEADERS = {
+  "Content-Type": "application/json",
+  "X-Master-Key": JSONBIN_KEY,
+  "X-Bin-Meta": "false"
+};
+
+const TEAMS = [
+  {conf:"UEFA",name:"Austria",flag:"🇦🇹"},
+  {conf:"UEFA",name:"Bélgica",flag:"🇧🇪"},
+  {conf:"UEFA",name:"Croacia",flag:"🇭🇷"},
+  {conf:"UEFA",name:"República Checa",flag:"🇨🇿"},
+  {conf:"UEFA",name:"Inglaterra",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+  {conf:"UEFA",name:"Francia",flag:"🇫🇷"},
+  {conf:"UEFA",name:"Alemania",flag:"🇩🇪"},
+  {conf:"UEFA",name:"Países Bajos",flag:"🇳🇱"},
+  {conf:"UEFA",name:"Noruega",flag:"🇳🇴"},
+  {conf:"UEFA",name:"Portugal",flag:"🇵🇹"},
+  {conf:"UEFA",name:"Escocia",flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
+  {conf:"UEFA",name:"España",flag:"🇪🇸"},
+  {conf:"UEFA",name:"Suiza",flag:"🇨🇭"},
+  {conf:"UEFA",name:"Turquía",flag:"🇹🇷"},
+  {conf:"CONMEBOL",name:"Argentina",flag:"🇦🇷"},
+  {conf:"CONMEBOL",name:"Brasil",flag:"🇧🇷"},
+  {conf:"CONMEBOL",name:"Colombia",flag:"🇨🇴"},
+  {conf:"CONMEBOL",name:"Ecuador",flag:"🇪🇨"},
+  {conf:"CONMEBOL",name:"Paraguay",flag:"🇵🇾"},
+  {conf:"CONMEBOL",name:"Uruguay",flag:"🇺🇾"},
+  {conf:"CONCACAF",name:"Canadá",flag:"🇨🇦"},
+  {conf:"CONCACAF",name:"Curazao",flag:"🇨🇼"},
+  {conf:"CONCACAF",name:"Haití",flag:"🇭🇹"},
+  {conf:"CONCACAF",name:"México",flag:"🇲🇽"},
+  {conf:"CONCACAF",name:"Panamá",flag:"🇵🇦"},
+  {conf:"CONCACAF",name:"Estados Unidos",flag:"🇺🇸"},
+  {conf:"CAF",name:"Algeria",flag:"🇩🇿"},
+  {conf:"CAF",name:"Cabo Verde",flag:"🇨🇻"},
+  {conf:"CAF",name:"R.D. Congo",flag:"🇨🇩"},
+  {conf:"CAF",name:"Egipto",flag:"🇪🇬"},
+  {conf:"CAF",name:"Ghana",flag:"🇬🇭"},
+  {conf:"CAF",name:"Costa de Marfil",flag:"🇨🇮"},
+  {conf:"CAF",name:"Marruecos",flag:"🇲🇦"},
+  {conf:"CAF",name:"Senegal",flag:"🇸🇳"},
+  {conf:"CAF",name:"Sudáfrica",flag:"🇿🇦"},
+  {conf:"CAF",name:"Túnez",flag:"🇹🇳"},
+  {conf:"AFC",name:"Australia",flag:"🇦🇺"},
+  {conf:"AFC",name:"Irán",flag:"🇮🇷"},
+  {conf:"AFC",name:"Irak",flag:"🇮🇶"},
+  {conf:"AFC",name:"Japón",flag:"🇯🇵"},
+  {conf:"AFC",name:"Jordania",flag:"🇯🇴"},
+  {conf:"AFC",name:"Corea del Sur",flag:"🇰🇷"},
+  {conf:"AFC",name:"Catar",flag:"🇶🇦"},
+  {conf:"AFC",name:"Uzbekistán",flag:"🇺🇿"},
+  {conf:"OFC",name:"Nueva Zelanda",flag:"🇳🇿"},
+];
+
+const CONF_LABELS = {AFC:"Asia (AFC)",CAF:"África (CAF)",CONCACAF:"Norteamérica y Centroamérica (CONCACAF)",CONMEBOL:"Sudamérica (CONMEBOL)",OFC:"Oceanía (OFC)",UEFA:"Europa (UEFA)"};
+const SLOT_LABELS = ["Campeón","Subcampeón","Tercer lugar","Cuarto lugar"];
+
+let picks = [null,null,null,null];
+let currentSlot = null;
+let entries = [];
+
+function setSyncStatus(status, count) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  const countEl = document.getElementById('syncCount');
+  dot.className = 'sync-dot ' + (status === 'live' ? 'live' : status === 'saving' ? 'saving' : status === 'error' ? 'error' : '');
+  label.textContent = {loading:'Conectando…',live:'En vivo · compartido',saving:'Guardando…',error:'Sin conexión'}[status];
+  countEl.textContent = (status === 'live' && count !== undefined) ? `· ${count} ${count===1?'participante':'participantes'}` : '';
+}
+
+async function loadEntries() {
+  try {
+    const res = await fetch(API_URL, {headers: HEADERS});
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    entries = data.entries || [];
+    setSyncStatus('live', entries.length);
+    return entries;
+  } catch {
+    setSyncStatus('error');
+    return [];
+  }
+}
+
+async function saveEntries(updated) {
+  const res = await fetch(API_URL, {
+    method: 'PUT',
+    headers: HEADERS,
+    body: JSON.stringify({entries: updated})
+  });
+  if (!res.ok) throw new Error();
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-' + tab).classList.add('active');
+  if (tab === 'board') loadEntries().then(renderLeaderboard);
+}
+
+function openModal(slot) {
+  currentSlot = slot;
+  document.getElementById('modalTitle').textContent = 'Selecciona: ' + SLOT_LABELS[slot];
+  document.getElementById('modalSearch').value = '';
+  renderTeams('');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('modalSearch').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  currentSlot = null;
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function filterTeams() {
+  renderTeams(document.getElementById('modalSearch').value);
+}
+
+function renderTeams(query) {
+  const q = query.toLowerCase();
+  const filtered = TEAMS.filter(t => t.name.toLowerCase().includes(q));
+  const confs = [...new Set(TEAMS.map(t => t.conf))].sort();
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+  confs.forEach(conf => {
+    const list = filtered.filter(t => t.conf === conf);
+    if (!list.length) return;
+    const sec = document.createElement('div');
+    sec.innerHTML = `<div class="conf-label">${CONF_LABELS[conf]}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'teams-list';
+    list.forEach(team => {
+      const alreadyPicked = picks.includes(team.name) && picks[currentSlot] !== team.name;
+      const isSelected = picks[currentSlot] === team.name;
+      const btn = document.createElement('button');
+      btn.className = `team-btn${isSelected?' selected':''}${alreadyPicked?' dimmed':''}`;
+      btn.innerHTML = `<span class="team-btn-flag">${team.flag}</span><span class="team-btn-name">${team.name}</span>`;
+      btn.onclick = () => selectTeam(team);
+      grid.appendChild(btn);
+    });
+    sec.appendChild(grid);
+    body.appendChild(sec);
+  });
+  if (!filtered.length) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">Ningún equipo coincide con tu búsqueda</div>';
+}
+
+function selectTeam(team) {
+  picks[currentSlot] = team.name;
+  updatePickDisplay(currentSlot, team);
+  updateTiebreakerTeams();
+  closeModal();
+}
+
+function updatePickDisplay(slot, team) {
+  const display = document.getElementById('pick-display-' + slot);
+  const btn = document.getElementById('pick-btn-' + slot);
+  const existing = document.getElementById('clear-' + slot);
+  if (existing) existing.remove();
+  if (team) {
+    display.innerHTML = `<span class="team-flag">${team.flag}</span><span class="team-name">${team.name}</span>`;
+    btn.textContent = 'Cambiar equipo';
+    btn.classList.add('has-pick');
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-btn';
+    clearBtn.id = 'clear-' + slot;
+    clearBtn.textContent = '✕ Quitar';
+    clearBtn.onclick = () => { picks[slot]=null; updatePickDisplay(slot,null); updateTiebreakerTeams(); };
+    btn.after(clearBtn);
+  } else {
+    display.innerHTML = '<span class="pick-placeholder">Elige un equipo</span>';
+    btn.textContent = 'Elegir equipo';
+    btn.classList.remove('has-pick');
+  }
+}
+
+function updateTiebreakerTeams() {
+  const t0 = picks[0] ? TEAMS.find(t=>t.name===picks[0]) : null;
+  const t1 = picks[1] ? TEAMS.find(t=>t.name===picks[1]) : null;
+  document.getElementById('tb-team0').innerHTML = t0 ? `<span class="tb-flag">${t0.flag}</span><span class="tb-name">${t0.name}</span>` : '<span class="tb-flag">🏆</span><span class="tb-name">Campeón</span>';
+  document.getElementById('tb-team1').innerHTML = t1 ? `<span class="tb-flag">${t1.flag}</span><span class="tb-name">${t1.name}</span>` : '<span class="tb-flag">🏅</span><span class="tb-name">Subcampeón</span>';
+}
+
+async function submitEntry() {
+  const name = document.getElementById('playerName').value.trim();
+  if (!name) { showToast('¡Escribe tu nombre primero!'); return; }
+  if (picks.filter(Boolean).length < 4) { showToast('¡Elige los 4 semifinalistas!'); return; }
+  setSyncStatus('saving');
+  const entry = {
+    id: Date.now(), nombre: name, picks: [...picks],
+    marcador: [parseInt(document.getElementById('tb-score0').value)||null, parseInt(document.getElementById('tb-score1').value)||null],
+    goleador: document.getElementById('topScorer').value.trim(),
+    fecha: new Date().toLocaleDateString('es-CO',{month:'short',day:'numeric'})
+  };
+  try {
+    const current = await loadEntries();
+    const updated = [...current, entry];
+    await saveEntries(updated);
+    entries = updated;
+    setSyncStatus('live', entries.length);
+    showToast('✓ ¡Picks enviados! Mucha suerte.');
+    document.getElementById('playerName').value = '';
+    picks = [null,null,null,null];
+    [0,1,2,3].forEach(i => updatePickDisplay(i,null));
+    document.getElementById('tb-score0').value = '';
+    document.getElementById('tb-score1').value = '';
+    document.getElementById('topScorer').value = '';
+    updateTiebreakerTeams();
+    setTimeout(() => { document.querySelectorAll('.tab')[1].click(); }, 1200);
+  } catch {
+    setSyncStatus('error');
+    showToast('Error al guardar. Intenta de nuevo.');
+  }
+}
+
+function renderLeaderboard() {
+  const list = document.getElementById('leaderboard-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="lb-empty"><div class="big-icon">📋</div><p>Aún no hay participantes.<br>¡Sé el primero en enviar tus picks!</p></div>';
+    return;
+  }
+  list.innerHTML = '';
+  [...entries].reverse().forEach((entry, idx) => {
+    const pos = idx+1;
+    const posClass = pos===1?'p1':pos===2?'p2':pos===3?'p3':'';
+    const posSymbol = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
+    const hasFinal = entry.marcador?.[0]!=null && entry.marcador?.[1]!=null;
+    const picksHTML = entry.picks.map(p => {
+      const t = TEAMS.find(t=>t.name===p);
+      return `<div class="entry-pick"><span class="entry-pick-flag">${t?t.flag:'?'}</span><span class="entry-pick-name">${p}</span></div>`;
+    }).join('');
+    const extrasHTML = [
+      hasFinal ? `<div class="extra-item"><span class="extra-label">Final:</span>${entry.marcador[0]}–${entry.marcador[1]}</div>` : '',
+      entry.goleador ? `<div class="extra-item"><span class="extra-label">Goleador:</span>${entry.goleador}</div>` : ''
+    ].join('');
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+    card.style.animationDelay = (idx*0.05)+'s';
+    card.innerHTML = `
+      <div class="entry-header">
+        <div class="entry-rank-name">
+          <div class="entry-pos ${posClass}">${posSymbol}</div>
+          <div><div class="entry-name">${entry.nombre}</div><div class="entry-date">Enviado el ${entry.fecha}</div></div>
+        </div>
+        <div><div class="entry-points">— pts</div><div class="entry-pts-label">PENDIENTE</div></div>
+      </div>
+      <div class="entry-picks">${picksHTML}</div>
+      ${(hasFinal||entry.goleador)?`<div class="entry-extras">${extrasHTML}</div>`:''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+loadEntries();
+</script>
+</body>
+</html>
